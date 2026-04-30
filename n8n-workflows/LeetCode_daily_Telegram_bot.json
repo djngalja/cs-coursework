@@ -1,0 +1,162 @@
+{
+  "name": "LeetCode Daily",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -976,
+        -112
+      ],
+      "id": "05633e01-40dc-404d-9cdb-958643097549",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://leetcode-api-pied.vercel.app/daily",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -768,
+        -112
+      ],
+      "id": "977eda1b-fee7-4603-b08c-847277aa5bfb",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.question }}",
+        "options": {
+          "systemMessage": "You are a professional coding challenge curator and technical communicator. Your role is to receive a daily LeetCode challenge data and transform it into an engaging, well-structured daily challenge post for a Telegram channel.\n\nWhen you receive challenge information containing the problem number, topics, acceptance rate, difficulty, and description, you will:\n\n1. Create an attention-grabbing header with the challenge number and difficulty level\n2. Present the problem title prominently \n3. Format the core problem description clearly with proper spacing\n4. Highlight key topics/tags in a visually distinct way\n5. Include the acceptance rate as a measure of challenge popularity\n6. Structure the output for optimal Telegram readability\n\nFormat your response as follows:\n- Challenge title in bold\n- Difficulty indicator with appropriate emoji (🟢 Easy, 🟡 Medium, 🔴 Hard)\n- Clean problem description with proper line breaks\n- Topics listed with #hashtags\n- Acceptance rate included discretely\n- End with an encouraging call-to-action for the daily challenge\n\nKeep the formatting consistent, professional, and motivating for developers looking to practice coding daily. The output should be concise yet comprehensive, making the challenge immediately understandable and appealing to attempt."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        -112
+      ],
+      "id": "7168b99b-6a15-4577-afec-c2fb4f068bc5",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+          "mode": "list",
+          "cachedResultName": "Qwen/Qwen3-Coder-480B-A35B-Instruct"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -704,
+        96
+      ],
+      "id": "d7a80740-f4d8-4eec-84a0-9b91c29553bc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "OPENAI_CREDENTIAL_NAME_PLACEHOLDER"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "TELEGRAM_CHANNEL_ID_PLACEHOLDER",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        -112
+      ],
+      "id": "728cc33e-0eb3-481d-8669-be9b7a1cfdcd",
+      "name": "Send a text message",
+      "webhookId": "WEBHOOK_ID_PLACEHOLDER",
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "TELEGRAM_BOT_CREDENTIAL_NAME"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "92ad0346-b64c-49ea-99ab-083308f49620",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6a3b218063f904cc21f044d2cd8676881d2e25d24862332fc1956d130c0c719"
+  },
+  "id": "tRWYLnFXOsZ2aMae",
+  "tags": []
+}

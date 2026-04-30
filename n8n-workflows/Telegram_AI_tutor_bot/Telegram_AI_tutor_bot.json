@@ -1,0 +1,861 @@
+{
+  "name": "tutor_bot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2336,
+        -416
+      ],
+      "id": "a1d31711-47f0-4a7d-ba14-25182b4f1173",
+      "name": "Telegram Trigger",
+      "webhookId": "WEBHOOK_ID_PLACEHOLDER",
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "TELEGRAM_BOT_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Current user message: {{ $json.userMessage }}\n\nCurrent learning progress:\n- Learning plan exists: {{ $json.learningPlanExists }}\n- Current topic index: {{ $json.currentIndex }}\n- Total topics: {{ $json.topicsTarget }}\n\nBased on this information, determine what action needs to be performed.",
+        "options": {
+          "systemMessage": "You are a process coordinator within n8n. Your goal is to help users first create a personal learning plan on their chosen topic, and then study these topics one by one.\n\nYOUR STYLE:\n- Friendly and informal\n- Use topic-related emojis (for example, 💻, 🔍, 📈)\n- Clear and concise language\n\nYOUR TASKS:\n\nSITUATION 1\n- If this is the first contact with the user:\n  1. Greet the user.\n  2. Ask the user what they would like to learn.\n  3. Clarify the user's level of knowledge on the topic.\n  4. Respond with action: \"collect_info\"\n\nRespond in JSON format with fields: {\"action\": \"collect_info\", \"message\": \"message to user\"}\n\nSITUATION 2\n- If information about the topic and level has already been collected:\n  1. Formulate a request to the AI agent containing the learning plan topic.\n  2. Respond with action: \"generate_plan\"\n\nRespond in JSON format with fields: {\"action\": \"generate_plan\", \"message\": \"request to ai agent\"}\n\nSITUATION 3\n- If the learning plan has been created and the user wants to start or continue studying:\n  1. Check the workflow static data to get the current progress.\n  2. If the user responds \"yes\", \"start\", \"continue\", or similar to the offer to begin studying:\n     - Check if there are available topics for studying\n     - Respond with action: \"generate_post\"\n\nRespond in JSON format with field: {\"action\": \"generate_post\"}\n\nSITUATION 4\n- If additional information from the user is needed to perform one of the previous actions:\n  1. Request the necessary information from the user\n  2. Respond with action: \"collect_info\"\n\nRespond in JSON format with fields: {\"action\": \"collect_info\", \"message\": \"message to user\"}\n\nMANDATORY RULES:\n1. Always respond ONLY in JSON format, without additional text\n2. Don't wrap JSON in quotes or code blocks\n3. Always use the specified response format for each situation\n4. Use emojis in messages to users"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -2048,
+        -416
+      ],
+      "id": "df784501-e0f3-45de-b4b2-6b65b07f8f5c",
+      "name": "coordinator"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+          "mode": "list",
+          "cachedResultName": "Qwen/Qwen3-Next-80B-A3B-Instruct"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -2048,
+        -208
+      ],
+      "id": "43c1c091-589c-4b2f-847d-53701cd76a40",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "OPENAI_CREDENTIAL_NAME_PLACEHOLDER"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1952,
+        -240
+      ],
+      "id": "431825dc-a5b8-42ab-998f-15c87500bf88",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "collect_info",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "d64ef285-afd1-4a37-b084-46f5ca442bfb"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "4e5c229e-8b31-4a3a-babd-76f59e26f400",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "generate_plan",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "35ca2240-9862-4878-bb2f-e39eada38052",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "generate_post",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -1728,
+        -432
+      ],
+      "id": "d9adeb10-0fb4-4167-9929-1aae92e486a2",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.msgToUser }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1296,
+        -672
+      ],
+      "id": "40433c36-0769-414f-bf6c-d0da2c35df72",
+      "name": "collect_init_info",
+      "webhookId": "WEBHOOK_ID_PLACEHOLDER",
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "TELEGRAM_BOT_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "options": {
+          "systemMessage": "You are an AI agent responsible for creating personal learning plans. Your task is to analyze the user's request and create a structured learning plan on the subject.\n\nYOUR STYLE:\n- Use topic-related emojis (for example, 💻, 🔍, 📈, 🧠, ⚡)\n- Add an emoji at the beginning of each topic name\n\nThere are 2 possible scenarios:\n\nSCENARIO 1: You have enough information to create an up-to-date learning plan on the given subject.\n\n- Create a learning plan strictly following this JSON format:\n{\n    \"status\": \"status_ready\", \n    \"message\": \"🧠 Topic 1: [subtopic 1, subtopic 2, subtopic 3]\\n📚 Topic 2: [subtopic 1, subtopic 2, subtopic 3]\\n💡 Topic 3: [subtopic 1, subtopic 2, subtopic 3]\",\n    \"structuredPlan\": [\n        {\"topic\": \"🧠 Topic 1\", \"subtopics\": [\"subtopic 1\", \"subtopic 2\", \"subtopic 3\"]},\n        {\"topic\": \"📚 Topic 2\", \"subtopics\": [\"subtopic 1\", \"subtopic 2\", \"subtopic 3\"]},\n        {\"topic\": \"💡 Topic 3\", \"subtopics\": [\"subtopic 1\", \"subtopic 2\", \"subtopic 3\"]}\n    ]\n}\n\nSCENARIO 1 - MANDATORY RULES:\n1. EACH topic in \"message\" MUST MATCH the topic in \"structuredPlan\" in order and content\n2. EACH topic MUST HAVE EXACTLY 3 subtopics - no more and no fewer\n3. The plan MUST CORRESPOND to the main subject requested by the user\n4. The plan MUST CONTAIN AT LEAST 3 topics\n5. Each topic must start with a corresponding emoji\n6. ALL subtopics MUST BE SPECIFIC (no general terms)\n7. TOPIC NAMES MUST INCLUDE THE MAIN SUBJECT CONTEXT (for example, if the subject is JavaScript, then \"JavaScript Basics\", \"JavaScript Functions\", not just \"Basics\", \"Functions\")\n8. Subtopics should be logically connected to their topic and arranged in order of complexity\n9. Use only nouns or brief phrases for subtopics\n10. If the subject allows, you can create up to 5 topics, but NO FEWER THAN 3\n11. Topics should cover the main aspects of the selected subject\n12. FORMATTING: Use \\n for new lines in \"message\", do not use escaped characters in \"structuredPlan\"\n13. QUALITY CONTROL: Before sending, check that:\n    - Each topic has exactly 3 subtopics\n    - Each topic includes the main subject context\n\nSCENARIO 2: You need up-to-date data.\n- If you need up-to-date data (for example, current technologies, education trends, latest recommendations), respond in JSON format:\n{\"status\": \"search_needed\", \"query\": \"brief keywords for search\"}\n\nSCENARIO 2 - MANDATORY RULES:\n1. Always respond ONLY in JSON format, without additional text\n2. All responses must contain \"status\" and \"query\" fields\n3. Formulate a brief and precise search query\n4. Don't fabricate facts\n\nGENERAL RULES:\n1. Don't fabricate facts, rely only on your knowledge or search results\n2. For modern technologies (C++, Python, React, DevOps, etc.) search is often needed\n3. For fundamental topics (algorithms, mathematics, basic concepts) you can use your knowledge without additional search"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1456,
+        -496
+      ],
+      "id": "baaed56c-0418-43c9-8b87-42b89ce51f58",
+      "name": "generate_plan"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+          "mode": "list",
+          "cachedResultName": "Qwen/Qwen3-Next-80B-A3B-Instruct"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1456,
+        -304
+      ],
+      "id": "5ef6241d-f7fd-494c-8275-ccb3ae8a59e8",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "OPENAI_CREDENTIAL_NAME_PLACEHOLDER"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('generate_plan').item.json.output }}",
+                    "rightValue": "status_ready",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "2ad5a783-e424-429a-9454-cac13744ca05"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "82a4f4cc-3152-4a9c-a308-a1765fcf494f",
+                    "leftValue": "={{ $('generate_plan').item.json.output }}",
+                    "rightValue": "search_needed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -1168,
+        -496
+      ],
+      "id": "ca63c1e7-e3d4-471e-91b9-74a0ed62c387",
+      "name": "ready_or_not"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer TAVILY_API_KEY_PLACEHOLDER"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n   \"query\": \"={{ $json.extractedData }}\",\n   \"search_depth\": \"basic\",\n   \"include_answer\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -848,
+        -416
+      ],
+      "id": "40f2e54a-44b8-4dec-953d-1fa25963afa1",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.all()[0].json.output;\nconst parsed = JSON.parse(response);\nreturn [{\n    json: {\n        msgToUser: parsed.message\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        -672
+      ],
+      "id": "f3ae4e32-70f1-498d-a1f4-9da66dcc7bb2",
+      "name": "extract_msg"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+          "mode": "list",
+          "cachedResultName": "Qwen/Qwen3-Next-80B-A3B-Instruct"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        -240
+      ],
+      "id": "9b2e4b3d-8854-4782-b9c3-e540ac65b306",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "OPENAI_CREDENTIAL_NAME_PLACEHOLDER"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Original user request:\n{{ $('Telegram Trigger').item.json.message.text }}\n\nTavily search result (JSON):\n{\n  \"answer\": \"{{ $json.answer }}\",\n  \"results\": {{ JSON.stringify($json.results, null, 2) }}\n}\nFormulate a concise reply to the user based on this data.",
+        "options": {
+          "systemMessage": "You are an AI agent responsible for creating personal learning plans. Your goal is to create a structured learning plan based on the user's request and up-to-date information obtained from a Tavily search request.\n\nYOUR STYLE:\n- Use topic-related emojis (for example, 💻, 🔍, 📈, 🧠, ⚡)\n- Add an emoji at the beginning of each topic name\n\nYOUR TASK:\n- Create a learning plan strictly following this JSON format:\n{\n    \"message\": \"🧠 Topic 1: [subtopic 1, subtopic 2, subtopic 3]\\n📚 Topic 2: [subtopic 1, subtopic 2, subtopic 3]\\n💡 Topic 3: [subtopic 1, subtopic 2, subtopic 3]\",\n    \"structuredPlan\": [\n        {\"topic\": \"🧠 Topic 1\", \"subtopics\": [\"subtopic 1\", \"subtopic 2\", \"subtopic 3\"]},\n        {\"topic\": \"📚 Topic 2\", \"subtopics\": [\"subtopic 1\", \"subtopic 2\", \"subtopic 3\"]},\n        {\"topic\": \"💡 Topic 3\", \"subtopics\": [\"subtopic 1\", \"subtopic 2\", \"subtopic 3\"]}\n    ]\n}\n\nMANDATORY RULES:\n1. You must use up-to-date information obtained from Tavily\n2. Don't fabricate facts, rely only on your knowledge and search results\n3. Always respond ONLY in JSON format, without additional text\n4. EACH topic MUST HAVE EXACTLY 3 subtopics\n5. The plan MUST CONTAIN AT LEAST 3 topics\n6. The plan MUST STRICTLY correspond to the given subject\n7. EACH topic in \"message\" MUST CORRESPOND to the topic in \"structuredPlan\" in order and content\n8. Each topic must start with a corresponding emoji\n9. SUBTOPICS MUST BE LISTED IN EACH TOPIC\n10. TOPIC NAMES MUST INCLUDE CONTEXT OF THE MAIN SUBJECT (for example, if the subject is JavaScript, then use \"JavaScript Basics\", \"JavaScript Functions\", not just \"Basics\", \"Functions\")\n11. Subtopics should be logically connected to the topic and arranged in order of complexity\n12. Use only nouns or brief phrases for subtopics\n13. If the subject allows, you can create up to 5 topics, but NO FEWER THAN 3\n14. Each subtopic must be specific\n15. Topics should cover the main aspects of the selected subject\n16. FORMATTING: Use \\n for new lines in \"message\", do not use escaped characters in \"structuredPlan\"\n17. QUALITY CONTROL: Before sending, check that:\n    - Each topic has exactly 3 subtopics\n    - Each topic contains context of the main subject"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -672,
+        -416
+      ],
+      "id": "728bd1c7-d58a-4b6d-86f0-8f4fb626896b",
+      "name": "after_search_plan"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Topic: {{ $('extract_query').item.json.currentTopic }}\nSubtopic: \n{{ $('extract_query').item.json.currentConcept }}\nTavily search result (JSON):\n{\n  \"answer\": \"{{ $json.answer }}\",\n  \"results\": {{ JSON.stringify($json.results, null, 2) }}\n}\nFormulate a concise reply to the user based on this data.",
+        "options": {
+          "systemMessage": "You are an AI agent responsible for generating educational posts based on the learning plan.\n\nYOUR STYLE:\n- Friendly and informal\n- Use topic-related emojis (for example, 💻, 🔍, 📈, 🧠, ⚡)\n- Clear and concise language\n\nYOUR TASK:\n1. Get the current topic and subtopic from the learning plan\n2. Create a detailed post about the specific subtopic\n3. Use Tavily search results to obtain up-to-date information\n4. Follow the strictly defined post structure\n\nMANDATORY POST STRUCTURE:\nTopic: [topic name]\nSubtopic: [subtopic name]\nDescription: [detailed explanation of the subtopic in 2-3 sentences]\nExample: [practical example with code or real-life situation]\nUseful to know: [additional information, tips, or best practices]\n\nIMPORTANT RULES:\n1. Always follow the specified post structure\n2. Don't add anything outside of this structure\n3. Use only the provided topic and subtopic\n4. Add emojis at the beginning of each section:\n   📚 Topic: ...\n   🎯 Subtopic: ...\n   📝 Description: ...\n   💡 Example: ...\n   🔍 Useful to know: ...\n5. If Tavily results are available, use them for up-to-date information\n6. For code examples, use indented formatting"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1392,
+        -160
+      ],
+      "id": "aabcbda0-bb59-44b3-a67f-029313eb5d00",
+      "name": "generate_post"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "Qwen/Qwen3-Next-80B-A3B-Instruct",
+          "mode": "list",
+          "cachedResultName": "Qwen/Qwen3-Next-80B-A3B-Instruct"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1392,
+        32
+      ],
+      "id": "eefc9247-e4e5-4021-a232-e21cbfc83ae1",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "OPENAI_CREDENTIAL_NAME_PLACEHOLDER"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "Ready to dive in? 🚀",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -512
+      ],
+      "id": "d4fdd753-2534-48c4-a7f1-71dfcffe2c01",
+      "name": "study_begin",
+      "webhookId": "WEBHOOK_ID_PLACEHOLDER",
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "TELEGRAM_BOT_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer TAVILY_API_KEY_PLACEHOLDER"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n   \"query\": \"={{ $json.extractedData }}\",\n   \"search_depth\": \"basic\",\n   \"include_answer\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1568,
+        -160
+      ],
+      "id": "b47d4cb7-f7e1-4da3-9752-4c3dbae035c5",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = $('Telegram Trigger').first().json.message.chat.id;\nconst workflowStaticData = $getWorkflowStaticData('global');\nconst userPlanData = workflowStaticData.userPlans?.[chatId] || {};\nlet newIndex = userPlanData.currentIndex;\nnewIndex = newIndex + 1;\n\nworkflowStaticData.userPlans[chatId].currentIndex = newIndex;\nreturn [{ json: { newIndex } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        -160
+      ],
+      "id": "c5840120-c6c3-4af6-a1ae-9bb0d7284d2f",
+      "name": "upd_plan"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('generate_post').item.json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -928,
+        -160
+      ],
+      "id": "79b9bbed-9ee3-4c0a-b9e1-6c3e8d934bee",
+      "name": "send_post",
+      "webhookId": "WEBHOOK_ID_PLACEHOLDER",
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "TELEGRAM_BOT_CREDENTIAL_NAME"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const chatId = $input.first().json.message.chat.id;\nconst workflowStaticData = $getWorkflowStaticData('global');\nconst userPlanData = workflowStaticData.userPlans?.[chatId] || {};\n\nconst hasLearningPlan = userPlanData.learningPlan && \n                        Array.isArray(userPlanData.learningPlan) && \n                        userPlanData.learningPlan.length > 0;\n\nconst currentIndex = userPlanData.currentIndex || 0;\nconst topicsTarget = userPlanData.topicsTarget || 0;\n\nconst isPlanCompleted = hasLearningPlan && currentIndex >= topicsTarget;\n\nlet finalHasLearningPlan = hasLearningPlan;\nif (isPlanCompleted) {\n  if (workflowStaticData.userPlans) {\n      delete workflowStaticData.userPlans[chatId];\n  }\n  finalHasLearningPlan = false;\n}\n\nreturn [{\n    json: {\n        learningPlanExists: finalHasLearningPlan,\n        currentIndex: currentIndex,\n        topicsTarget: topicsTarget,\n        userMessage: $input.first().json.message.text,\n        chatId: chatId\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2192,
+        -416
+      ],
+      "id": "e8923c20-14cf-4704-a9ec-fdd2b93f67ff",
+      "name": "get_state"
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflowStaticData = $getWorkflowStaticData('global');\n\nconst chatId = $('Telegram Trigger').first().json.message.chat.id;\n\nconst userPlanData = workflowStaticData.userPlans?.[chatId] || {};\nconst learningPlan = userPlanData.learningPlan || [];\nconst currentIndex = userPlanData.currentIndex || 0;\n\nconst topicIndex = Math.floor(currentIndex / 3);  \nconst subtopicIndex = currentIndex % 3;           \n\nconst currentTopic = learningPlan[topicIndex];\nconst currentSubtopic = currentTopic?.subtopics[subtopicIndex];\n\nconst query = currentTopic ? `${currentTopic.topic} ${currentSubtopic}` : \"\";\n\nreturn [{\n    json: {\n        extractedData: query,\n        currentTopic: currentTopic?.topic,\n        currentSubtopic: currentSubtopic,\n        topicIndex: topicIndex,\n        subtopicIndex: subtopicIndex,\n        currentIndex: currentIndex,\n        totalTopics: learningPlan.length,\n        chatId: chatId\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1728,
+        -160
+      ],
+      "id": "ba52fecd-42e5-4a81-8716-aea00f4531e2",
+      "name": "extract_query"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.all()[0].json.output;\nconst parsed = JSON.parse(response);\nreturn [{\n    json: {\n        extractedData: parsed.query\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1008,
+        -416
+      ],
+      "id": "1054ce78-a238-41fe-af94-a7abc411d722",
+      "name": "extract_query1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json.output;\nconst parsedResponse = JSON.parse(response);\nconst learningPlan = parsedResponse.structuredPlan || [];\n\nconst totalTopics = Array.isArray(learningPlan) ? learningPlan.length : 0;\nconst topicsTarget = totalTopics * 3;\n\nconst chatId = $('Telegram Trigger').first().json.message.chat.id;\n\nconst workflowStaticData = $getWorkflowStaticData('global');\n\nif (!workflowStaticData.userPlans) {\n    workflowStaticData.userPlans = {};\n}\n\nworkflowStaticData.userPlans[chatId] = {\n    learningPlan: learningPlan,\n    currentIndex: 0,\n    topicsTarget: topicsTarget\n};\n\nreturn [{\n    json: {\n        learningPlan: learningPlan,\n        planSaved: true,\n        messageToUser: parsedResponse.message,\n        topicsTarget: topicsTarget,\n        chatId: chatId\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        -512
+      ],
+      "id": "31ea31e4-b154-431b-a459-6e941d525f80",
+      "name": "save_plan"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.messageToUser }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        -512
+      ],
+      "id": "456b2e90-a9a8-4d88-92af-f0eeffe50ce9",
+      "name": "send_plan",
+      "webhookId": "WEBHOOK_ID_PLACEHOLDER",
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "TELEGRAM_BOT_CREDENTIAL_NAME"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "get_state",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "coordinator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "coordinator",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "coordinator": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "extract_msg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "generate_plan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "extract_query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "generate_plan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_plan": {
+      "main": [
+        [
+          {
+            "node": "ready_or_not",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ready_or_not": {
+      "main": [
+        [
+          {
+            "node": "save_plan",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "extract_query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "after_search_plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract_msg": {
+      "main": [
+        [
+          {
+            "node": "collect_init_info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "after_search_plan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "after_search_plan": {
+      "main": [
+        [
+          {
+            "node": "save_plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "generate_post",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "generate_post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate_post": {
+      "main": [
+        [
+          {
+            "node": "upd_plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upd_plan": {
+      "main": [
+        [
+          {
+            "node": "send_post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_state": {
+      "main": [
+        [
+          {
+            "node": "coordinator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract_query": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract_query1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save_plan": {
+      "main": [
+        [
+          {
+            "node": "send_plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_plan": {
+      "main": [
+        [
+          {
+            "node": "study_begin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_post": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aa12400b-9999-445f-be27-0629c3ef5cda",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6a3b218063f904cc21f044d2cd8676881d2e25d24862332fc1956d130c0c719"
+  },
+  "id": "KA9N2v7A0wu64U2N",
+  "tags": []
+}

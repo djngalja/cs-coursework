@@ -1,0 +1,32 @@
+# n8n Mini projects
+
+A small collection of AI-powered Telegram bots built with n8n.
+
+## Projects
+
+### 🤖 [AI Tutor Bot](Telegram_AI_tutor_bot)
+A bot that creates personalized learning plans, delivers content via Telegram and tracks user progress. Features multi-agent AI coordination and real-time search results.
+
+### 📚 Book Digest Bot
+A bot that fetches new book releases from an RSS feed and sends summaries to subscribers of your Telegram channel every evening.
+
+#### Setup
+- Import `Book_digest_bot.json` into your n8n workflow
+- Replace placeholders:
+    - RSS feed URL
+    - Telegram channel ID
+    - Telegram API credential
+    - OpenAI credential
+
+### 💻 LeetCode Daily Bot
+This bot delivers AI-formatted content of a daily LeetCode challenge to your Telegram channel.
+
+#### Setup
+- Import `LeetCode_daily_Telegram_bot.json` into your n8n workflow
+- Replace placeholders:
+    - Telegram channel ID
+    - Telegram API credential
+    - OpenAI credential
+
+#### Acknowledgments
+This project utilizes the [LeetCode API / LeetCode Sorted](https://github.com/noworneverev/leetcode-api).

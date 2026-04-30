@@ -1,0 +1,162 @@
+{
+  "name": "book-digest-bot",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "RSS_FEED_URL_PLACEHOLDER",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -512,
+        -272
+      ],
+      "id": "245406c0-e09e-4e82-be34-243c511a46c0",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 23
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -704,
+        -272
+      ],
+      "id": "e22758cd-4dba-40c0-8187-4b2c0ad78898",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Link:\n{{ $json.link }}\n\nContent:\n{{ $json.content }}\n\nSnippet:\n{{ $json.contentSnippet }}",
+        "options": {
+          "systemMessage": "You are a personal literary digest curator. Your task is to receive information about new books and create an aesthetically pleasing, well-structured daily digest for Telegram distribution.\n\nStyle: Use emojis strategically to enhance visual appeal."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        -272
+      ],
+      "id": "c2ab6047-cf56-4dae-b051-adb05a4722e3",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "Qwen/Qwen3-235B-A22B-Instruct-2507",
+          "mode": "list",
+          "cachedResultName": "Qwen/Qwen3-235B-A22B-Instruct-2507"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        -80
+      ],
+      "id": "ee3b8ed9-37b1-4e78-a365-7fdc397755a6",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "OPENAI_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "OPENAI_CREDENTIAL_NAME_PLACEHOLDER"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "TELEGRAM_CHANNEL_ID_PLACEHOLDER",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        64,
+        -272
+      ],
+      "id": "5d8d7db0-62e0-43db-a1de-143eb1041619",
+      "name": "Send a text message",
+      "webhookId": "WEBHOOK_ID_PLACEHOLDER",
+      "credentials": {
+        "telegramApi": {
+          "id": "TELEGRAM_CREDENTIAL_ID_PLACEHOLDER",
+          "name": "TELEGRAM_BOT_CREDENTIAL_NAME"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "71d7b715-ee23-4a9c-b8e4-1b68eacc59c2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f6a3b218063f904cc21f044d2cd8676881d2e25d24862332fc1956d130c0c719"
+  },
+  "id": "e3wuByFxCd3n4l72",
+  "tags": []
+}

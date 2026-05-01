@@ -8,10 +8,10 @@ A small collection of AI-powered Telegram bots built with n8n.
 
 ## Projects
 
-### [AI Tutor Bot](Telegram_AI_tutor_bot)
+### 1. [AI Tutor Bot](Telegram_AI_tutor_bot)
 A bot that creates personalized learning plans, delivers content via Telegram and tracks user progress. Features multi-agent AI coordination and real-time search results.
 
-### Book Digest Bot
+### 2. Book Digest Bot
 A bot that fetches new book releases from an RSS feed and sends summaries to subscribers of your Telegram channel every evening.
 
 #### Setup
@@ -22,7 +22,7 @@ A bot that fetches new book releases from an RSS feed and sends summaries to sub
     - Telegram API credential
     - OpenAI credential
 
-### LeetCode Daily Bot
+### 3. LeetCode Daily Bot
 This bot delivers AI-formatted content of a daily LeetCode challenge to your Telegram channel.
 
 #### Setup

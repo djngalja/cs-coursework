@@ -357,34 +357,3 @@ void print_matched_line(const struct grep_input *input, int res,
     printf("%s", line);
   }
 }
-
-// testing
-/* void print_grep_input(const struct grep_input *input, char **argv) {
-  printf("=== Input Structure ===\nFlags:\n");
-
-  printf("  -e: %d\n", input->e);
-  printf("  -i: %d\n", input->i);
-  printf("  -v: %d\n", input->v);
-  printf("  -c: %d\n", input->c);
-  printf("  -l: %d\n", input->l);
-  printf("  -n: %d\n", input->n);
-  printf("  -h: %d\n", input->h);
-  printf("  -s: %d\n", input->s);
-  printf("  -f: %d\n", input->f);
-  printf("  -o: %d\n", input->o);
-
-  printf("Pattern file (-f): %s\n",
-         input->pattern_file ? input->pattern_file : "(null)");
-  printf("Single pattern: %s\n", input->pattern ? input->pattern : "(null)");
-  printf("Patterns from -e (%d total):\n", input->num_e);
-  for (int i = 0; i < input->num_e && i < 100; i++) {
-    printf("  [%d]: %s\n", i,
-           input->patterns[i] ? input->patterns[i] : "(null)");
-  }
-
-  printf("num_e: %d\n", input->num_e);
-  printf("num_e_patterns: %d\n", input->num_e_patterns);
-
-  printf("First file: %s\n", argv[input->first_file_id]);
-  printf("========================\n");
-} */

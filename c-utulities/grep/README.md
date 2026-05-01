@@ -1,3 +1,5 @@
+![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white)
+
 # Grep Utility
 Custom implementation of the `grep` command-line utility for searching patterns inside text files.
 

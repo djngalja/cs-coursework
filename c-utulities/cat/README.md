@@ -1,3 +1,5 @@
+![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white)
+
 # Cat Utility
 
 Custom implementation of the `cat` command-line utility for displaying text files.

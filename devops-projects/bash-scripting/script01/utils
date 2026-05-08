@@ -1,0 +1,80 @@
+get_time_zone() {
+    tz1=$(timedatectl | grep "Time zone" | awk -F' ' '{print $3}')
+    tz2=$(timedatectl | grep "Time zone" | awk -F' ' '{print $5}')
+    tz2="${tz2%"00)"}"
+    echo "$tz1 UTC$tz2"
+}
+
+get_os() {
+    os1=$(cat /etc/issue)
+    len=${#os1}
+    echo "${os1:0:len-6}"
+}
+
+get_sys_info() {
+    host_n=$(hostname)
+    t_zone=$(get_time_zone)
+    os=$(get_os)
+    date=$(date +"%d %B %Y %T")
+    upt=$(uptime -p)
+    upt_s=$(cat /proc/uptime | awk -F' ' '{print $1}')
+    my_ip=$(ifconfig | grep netmask | grep broadcast | awk -F' ' '{print $2}')
+    mask=$(ifconfig | grep netmask | grep broadcast | awk -F' ' '{print $4}')
+    gtway=$(ip r | grep default | awk -F' ' '{print $3}')
+    ram_ttl=$(free --mega | grep Mem | awk -F' ' '{printf("%.3f", $2 / 1000)}')
+    ram_usd=$(free --mega | grep Mem | awk -F' ' '{printf("%.3f", $3 / 1000)}')
+    ram_fr=$(free --mega | grep Mem | awk -F' ' '{printf("%.3f", $7 / 1000)}')
+    sp_root=$(df / --block-size=KB --output=size | grep -v blocks | awk '{printf("%.2f", $1/1000)}')
+    sp_root_usd=$(df / --block-size=KB --output=used | grep -v Used | awk '{printf("%.2f", $1/1000)}')
+    sp_root_fr=$(df / --block-size=KB --output=avail | grep -v Avail | awk '{printf("%.2f", $1/1000)}')
+}
+
+print_sys_info() {
+    echo -e "${des1}HOSTNAME${clear} = ${des2}$host_n${clear}"
+    echo -e "${des1}TIMEZONE${clear} = ${des2}$t_zone${clear}"
+    echo -e "${des1}USER${clear} = ${des2}$USER${clear}"
+    echo -e "${des1}OS${clear} = ${des2}$os${clear}"
+    echo -e "${des1}DATE${clear} = ${des2}$date${clear}"
+    echo -e "${des1}UPTIME${clear} = ${des2}$upt${clear}"
+    echo -e "${des1}UPTIME_SEC${clear} = ${des2}$upt_s${clear}"
+    echo -e "${des1}IP${clear} = ${des2}$my_ip${clear}"
+    echo -e "${des1}MASK${clear} = ${des2}$mask${clear}"
+    echo -e "${des1}GATEWAY${clear} = ${des2}$gtway${clear}"
+    echo -e "${des1}RAM_TOTAL${clear} = ${des2}$ram_ttl GB${clear}"
+    echo -e "${des1}RAM_USED${clear} = ${des2}$ram_usd GB${clear}"
+    echo -e "${des1}RAM_FREE${clear} = ${des2}$ram_fr GB${clear}"
+    echo -e "${des1}SPACE_ROOT${clear} = ${des2}$sp_root MB${clear}"
+    echo -e "${des1}SPACE_ROOT_USED${clear} = ${des2}$sp_root_usd MB${clear}"
+    echo -e "${des1}SPACE_ROOT_FREE${clear} = ${des2}$sp_root_fr MB${clear}"
+}
+
+print_sys_info_file() {
+    echo "HOSTNAME = $host_n"
+    echo "TIMEZONE = $t_zone"
+    echo "USER = $USER"
+    echo "OS = $os"
+    echo "DATE = $date"
+    echo "UPTIME = $upt"
+    echo "UPTIME_SEC = $upt_s"
+    echo "IP = $my_ip"
+    echo "MASK = $mask"
+    echo "GATEWAY = $gtway"
+    echo "RAM_TOTAL = $ram_ttl GB"
+    echo "RAM_USED = $ram_usd GB"
+    echo "RAM_FREE = $ram_fr GB"
+    echo "SPACE_ROOT = $sp_root MB"
+    echo "SPACE_ROOT_USED = $sp_root_usd MB"
+    echo "SPACE_ROOT_FREE = $sp_root_fr MB"
+}
+
+get_design_vars() {
+    clear="\033[0m"
+
+    bg1=$((column1_background + 40))
+    bg2=$((column2_background + 40))
+    fg1=$((column1_font_color + 30))
+    fg2=$((column2_font_color + 30))
+
+    des1="\033[${fg1};${bg1}m"
+    des2="\033[${fg2};${bg2}m"
+}

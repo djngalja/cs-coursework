@@ -1,0 +1,61 @@
+print_top_10_directories() {
+    mapfile -t results < <(find "$MY_PATH" -mindepth 1 -type d -exec du -h {} + 2>/dev/null | sort -hr | head -n 10)
+    cnt=1
+    for res in "${results[@]}"
+    do
+        sz=$(echo "$res" | awk '{print $1}')
+        path=${res:${#sz}+1}
+        printf "%d - %s, %s\n" $cnt "$path" $sz
+        ((++cnt))
+    done
+}
+
+print_top_10_files() {
+    mapfile -t results < <(find "$MY_PATH" -type f -exec du -h {} + 2>/dev/null | sort -hr | head -n 10)
+    cnt=1
+    for res in "${results[@]}"
+    do
+        sz=$(echo "$res" | awk '{print $1}')
+        path=${res:${#sz}+1}
+        file=$(basename "$path")
+        if [[ $file == *.* ]]
+        then
+            type="${file##*.}"
+        else
+            type=""
+        fi
+        printf "%d - %s, %s, %s\n" $cnt "$path" $sz $type
+        ((++cnt))
+    done
+}
+
+print_top_10_exe_files() {
+    mapfile -t results < <(find "$MY_PATH" -type f -executable -exec du -h {} + 2>/dev/null | sort -hr | head -n 10)
+    cnt=1
+    for res in "${results[@]}"
+    do
+        sz=$(echo "$res" | awk '{print $1}')
+        path=${res:${#sz}+1}
+        printf "%d - %s, %s\n" $cnt "$path" $sz
+        ((++cnt))
+    done
+}  
+
+print_report() {
+    txt_format="\033[1;34m"
+    clear="\033[0m"
+
+    echo -e "${txt_format}Total number of directories (including all nested ones) =${clear} $(find "$MY_PATH" -mindepth 1 -type d 2>/dev/null | wc -l)"
+    echo -e "${txt_format}TOP 10 directories of maximum size arranged in descending order (path and size):${clear}"
+    print_top_10_directories
+    echo -e "${txt_format}Total number of files =${clear} $(find "$MY_PATH" -type f 2>/dev/null | wc -l)"
+    echo -e "${txt_format}Configuration files (with the .conf extension) =${clear} $(find "$MY_PATH" -type f -name "*.conf" 2>/dev/null | wc -l)"
+    echo -e "${txt_format}Text files (with the .txt extension) =${clear} $(find "$MY_PATH" -type f -iname "*.txt" 2>/dev/null | wc -l)"
+    echo -e "${txt_format}Executable files =${clear} $(find "$MY_PATH" -type f -executable 2>/dev/null | wc -l)"
+    echo -e "${txt_format}Log files (with the .log extension) =${clear} $(find "$MY_PATH" -type f -name "*.log" 2>/dev/null | wc -l)"
+    echo -e "${txt_format}Archive files =${clear} $(find "$MY_PATH" -type f \( -iname "*.zip" -o -iname "*.rar" -o -iname "*.7z" \) 2>/dev/null | wc -l)"
+    echo -e "${txt_format}TOP 10 files of maximum size arranged in descending order (path, size and extension)${clear}":  
+    print_top_10_files
+    echo -e "${txt_format}TOP 10 executable files of the maximum size arranged in descending order (path and size):${clear}"
+    print_top_10_exe_files
+} 

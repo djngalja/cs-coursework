@@ -1,0 +1,14 @@
+sys_monitor() {
+    if [[ $1 -eq 1 ]]
+    then
+        cat ../04/combined_log_format* | sort -k 9
+    elif [[ $1 -eq 2 ]]
+    then
+        cat ../04/combined_log_format* | awk '{print $1}' | sort -u
+    elif [[ $1 -eq 3 ]]
+    then
+        awk '$9 >= 400 && $9 <600' ../04/combined_log_format*
+    else 
+        awk '$9 >= 400 && $9 <600' ../04/combined_log_format* | awk '{print $1}' | sort -u
+    fi
+}

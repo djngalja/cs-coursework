@@ -1,0 +1,107 @@
+mult_str() {
+    res=""
+    for ((n=0; n < $1; ++n))
+    do
+        res+=$2
+    done
+    echo $res
+}
+
+files_gen() {
+    local MY_PATH=$1
+    local NUM_FILE_GOAL=$2
+    local INIT_STR=$(echo $3 | awk -F'.' '{ print $1}')
+    local EXT=$(echo $3 | awk -F'.' '{ print $2}')
+    local SZ=${4:0:${#4}-2}
+    
+    local len=${#INIT_STR}
+    case $len in
+        1) local add=3 ;;
+        2) local add=2 ;;
+        *) local add=1 ;;
+    esac
+
+    cnt_file=0
+    while ((cnt_file < NUM_FILE_GOAL && overflow == 0))
+    do
+        local prev_letter="0"
+        for ((j=0; j < len && cnt_file < NUM_FILE_GOAL && overflow == 0; ++j))
+        do
+            sp_root_fr=$(df / --block-size=MB --output=avail | grep -v Avail | awk -F'M' '{ print $1 }')
+            if [[ $sp_root_fr -le 1000 ]]
+            then
+                ((overflow = -1))
+                echo "[Info] Script stopped: ${sp_root_fr}MB of free space left"
+                break
+            fi
+            letter=${INIT_STR:j:1}
+            if [[ $letter == $prev_letter ]]
+            then
+                continue
+            fi
+            prev_letter=$letter
+            file_name="${INIT_STR:0:j}$(mult_str $add $letter)${INIT_STR:j}"
+            full_file_name="${MY_PATH}/${file_name}_$(date '+%d%m%y').$EXT"
+            if [[ ${#full_file_name} -gt 255 ]]
+            then
+                ((overflow = -1))
+                echo "[Info] Script stopped: file name length exceeded"
+                break
+            fi
+            if touch $full_file_name
+            then
+                fallocate -l ${SZ}KB $full_file_name
+                echo "$full_file_name [$(date '+%d/%b/%Y:%H:%M:%S %z')] ${SZ}KB" >> file_generator.log
+            fi
+            ((cnt_file++))
+        done
+        ((add++))
+    done
+}
+
+dirs_gen() {
+    case ${1:(-1)} in 
+        /) local MY_PATH=$1 ;;
+        *) local MY_PATH="$1/" ;;
+    esac
+    local NUM_DIR_GOAL=$2
+    local INIT_STR=$3
+
+    local len=${#INIT_STR}
+    case $len in
+        1) local add=3 ;;
+        2) local add=2 ;;
+        *) local add=1 ;;
+    esac
+
+    cnt_dir=0
+    overflow=0
+    while ((cnt_dir < NUM_DIR_GOAL && overflow == 0))
+    do
+        local prev_letter="0"
+        for ((i=0; i < len && cnt_dir < NUM_DIR_GOAL && overflow == 0; ++i))
+        do
+            letter=${INIT_STR:i:1}
+            if [[ $letter == $prev_letter ]]
+            then
+                continue
+            fi
+            prev_letter=$letter
+            dir_name="${INIT_STR:0:i}$(mult_str $add $letter)${INIT_STR:i}"
+            full_path="${MY_PATH}${dir_name}_$(date '+%d%m%y')"
+            if [[ -d "$full_path" ]]
+            then
+                ((overflow = -1))
+                echo "[Info] Script stopped: ${full_path} already exists"
+                break
+            fi
+            if mkdir $full_path
+            then
+                echo "$full_path [$(date '+%d/%b/%Y:%H:%M:%S %z')]" >> file_generator.log
+                files_gen $full_path $4 $5 $6
+            fi
+            ((cnt_dir++))
+        done
+        ((add++))
+    done
+}

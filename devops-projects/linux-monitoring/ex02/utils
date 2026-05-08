@@ -1,0 +1,108 @@
+mult_str() {
+    res=""
+    for ((n=0; n < $1; ++n))
+    do
+        res+=$2
+    done
+    echo $res
+}
+
+files_gen() {
+    local path=$1
+    local len=${#FILE_STR}
+    case $len in
+        1) local add=3 ;;
+        2) local add=2 ;;
+        *) local add=1 ;;
+    esac
+    local num_file=$(shuf -i 1-100 -n 1)
+    local cnt_file=0
+    while ((cnt_file < num_file && overflow == 0))
+    do
+        local prev_letter="0"
+        for ((j=0; j < len && cnt_file < num_file && overflow == 0; ++j))
+        do
+            sp_root_fr=$(df / --block-size=MB --output=avail | grep -v Avail | awk -F'M' '{ print $1 }')
+            if [[ $sp_root_fr -le $SZ_LIM ]]
+            then
+                ((overflow = -1))
+                echo "[Info] Script stopped: ${sp_root_fr}MB of free space left"
+                break
+            fi
+            local letter=${FILE_STR:j:1}
+            if [[ $letter == $prev_letter ]]
+            then
+                continue
+            fi
+            prev_letter=$letter
+            local file_name="${FILE_STR:0:j}$(mult_str $add $letter)${FILE_STR:j}"
+            local full_file_name="${path}/${file_name}_$(date '+%d%m%y').$FILE_EXT"
+            if touch $full_file_name
+            then
+                fallocate -l ${SZ}MB $full_file_name
+                echo "$full_file_name [$(date '+%d/%b/%Y:%H:%M:%S %z')] ${SZ}MB" >> file_generator.log
+            fi
+            ((cnt_file++))
+        done
+        ((add++))
+    done
+}
+
+subdirs_gen() {
+    local path=$1
+    local len=${#DIR_STR}
+    case $len in
+        1) local add=3 ;;
+        2) local add=2 ;;
+        *) local add=1 ;;
+    esac
+    local num_subdir=$(shuf -i 1-100 -n 1)
+    local cnt_subdir=0
+    while ((cnt_subdir < num_subdir && overflow == 0))
+    do
+        local prev_letter="0"
+        for ((i=0; i < len && cnt_subdir < num_subdir && overflow == 0; ++i))
+        do
+            local letter=${DIR_STR:i:1}
+            if [[ $letter == $prev_letter ]]
+            then
+                continue
+            fi
+            prev_letter=$letter
+            local subdir_name="${DIR_STR:0:i}$(mult_str $add $letter)${DIR_STR:i}"
+            local full_subdir="${path}/${subdir_name}_$(date '+%d%m%y')"
+            if mkdir "$full_subdir"
+            then
+                echo "$full_subdir [$(date '+%d/%b/%Y:%H:%M:%S %z')]" >> file_generator.log
+                files_gen "$full_subdir"
+            fi
+            ((cnt_subdir++))
+        done
+        ((add++))
+    done
+}
+
+process_dirs() {
+    if [[ $overflow == 0 ]]
+    then
+        local dir=$1
+        for subdir in "$dir"/*
+        do
+            if [[ -d "$subdir" && ! "$subdir" =~ ^.*\/(s?bin)(\/.*)?$ ]]
+            then
+                process_dirs "$subdir"
+            fi
+        done
+        subdirs_gen $dir
+    fi
+}
+
+sys_clog() {
+    DIR_STR=$1
+    FILE_STR=$(echo $2 | awk -F'.' '{ print $1}')
+    FILE_EXT=$(echo $2 | awk -F'.' '{ print $2}')
+    SZ=${3:0:${#3}-2}
+    overflow=0
+    SZ_LIM=$((1000 + $SZ))
+    process_dirs "$INIT_DIR"
+}

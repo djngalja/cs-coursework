@@ -1,0 +1,29 @@
+collect_stat() {
+    while true
+    do 
+        hd_used=$(df / --output=pcent | grep -v Use | awk -F'%' '{ print $1 }')
+        cpu_idle=$(top -bn1 | grep Cpu | awk -F',' '{print $4}' | awk '{ print $1 }')
+        mem_free=$(top -bn1 | grep "MiB Mem" | awk '{print $6}')
+        mem_total=$(top -bn1 | grep "MiB Mem" | awk '{print $4}')
+        
+        echo "# HELP hd_used Hard disk used in percent" >> $temp_file
+        echo "# TYPE hd_used gauge" >> $temp_file
+        echo "hd_used $hd_used" >> $temp_file
+
+        echo "# HELP cpu_idle CPU idle in percent" >> $temp_file
+        echo "# TYPE cpu_idle gauge" >> $temp_file
+        echo "cpu_idle $cpu_idle" >> $temp_file
+        
+        echo "# HELP mem_free Free RAM in MiB" >> $temp_file
+        echo "# TYPE mem_free gauge" >> $temp_file
+        echo "mem_free $mem_free" >> $temp_file
+        
+        echo "# HELP mem_total Total RAM in MiB" >> $temp_file
+        echo "# TYPE mem_total gauge" >> $temp_file
+        echo "mem_total $mem_total" >> $temp_file
+
+        mv $temp_file $file
+
+        sleep 5
+    done
+}

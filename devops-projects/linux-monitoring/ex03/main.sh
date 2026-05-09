@@ -2,7 +2,8 @@
 
 . ./utils
 
-INIT_DIR="../02/TEST"
+LOG_PATH="../ex02/file_generator.log"
+INIT_DIR="../ex02/TEST"
 
 if [[ $# != 1 ]]
 then

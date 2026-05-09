@@ -1,6 +1,5 @@
 log_file() {
-    MY_PATH="../02/file_generator.log"
-    for log in $(cat "$MY_PATH" | awk 'NF == 3 {print $1}')
+    for log in $(cat "$LOG_PATH" | awk 'NF == 3 {print $1}')
     do
         if [[ -d "../02/$log" ]]
         then

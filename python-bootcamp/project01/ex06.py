@@ -1,44 +1,42 @@
-def validate(inp: str) -> bool:
-    res: bool = True
-    if not(inp[0] == '-' or inp[0] == '+' 
-           or (inp[0] >= '0' and inp[0] <= '9')):
-        res = False 
-    cnt_dot: int  = 0
-    for i in range(1, len(inp)):
-        if inp[i] == '.':
-            cnt_dot += 1
-        elif (inp[i] < '0' or inp[i] > '9'):
-            res = False
-    if cnt_dot > 1:
-        res = False
-    return res
-        
-def get_num(inp: str) -> float:
-    positive: bool = False if inp[0] == '-' else True
-    pos: int = 1 if (inp[0] == '-' or inp[0] == '+') else 0
-    num: float = ord(inp[pos]) - ord('0')
-    pos += 1
-    while (pos < len(inp) and inp[pos] != '.'):
-        num *= 10
-        num += ord(inp[pos]) - ord('0')
-        pos += 1
-    pos += 1
-    cnt_fraction: int = 0
-    while pos < len(inp):
-        cnt_fraction += 1
-        temp: float = ord(inp[pos]) - ord('0')
-        num += temp / (10 ** cnt_fraction)
-        pos += 1
-    if not positive:
-        num *= -1
-    return num
+import json
+import os
+
+def merge_two_sorted_lists(data: json) -> dict[str, list]:
+    listn = [list_name for list_name in data.keys()]
+    id0: int = 0
+    id1: int = 0
+    lim0: int = len(data[listn[0]])
+    lim1: int = len(data[listn[1]])
+    new_list = []
+    while(id0 < lim0 and id1 < lim1):
+        if data[listn[0]][id0]["year"] < data[listn[1]][id1]["year"]:
+            new_list.append(data[listn[0]][id0])
+            id0 += 1
+        else:
+           new_list.append(data[listn[1]][id1]) 
+           id1 += 1
+    while id0 < lim0:
+        new_list.append(data[listn[0]][id0])
+        id0 += 1
+    while id1 < lim1:
+        new_list.append(data[listn[1]][id1]) 
+        id1 += 1
+    return {"list0": new_list}
 
 def main() -> None:
-    inp = input()
-    if validate(inp):
-        print("{:.3f}".format(get_num(inp) * 2))
-    else:
-        print("Error: invalid input")
-
+    try:
+        file_sz: int = os.path.getsize("input.txt")
+        if file_sz != 0:
+            with open("input.txt", "r") as file:
+                data: json = json.load(file)
+            output_dict: dict[str, list] = merge_two_sorted_lists(data)
+            print(json.dumps(output_dict, indent=2))
+        else:
+            print("Empty file")
+    except FileNotFoundError:
+        print("File not found")
+    except json.JSONDecodeError:
+        print("Invalid input")
+    
 if __name__ == "__main__":
     main()

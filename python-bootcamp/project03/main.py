@@ -56,9 +56,9 @@ async def download_img(url: str, target_dir: str) -> str:
                     return "Success"
                 else:
                     return "Error"
-    except aiohttp.ClientConnectorError:
+    except (aiohttp.ClientConnectorError, asyncio.TimeoutError):
         return "Error"
-    except asyncio.TimeoutError:
+    except Exception:
         return "Error"
 
 async def manager(q: asyncio.Queue, put_url_task: asyncio.Task, get_url_task: asyncio.Task) -> None:

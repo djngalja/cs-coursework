@@ -35,7 +35,7 @@ def main() -> None:
             print("Empty file")
     except FileNotFoundError:
         print("File not found")
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, TypeError):
         print("Invalid input")
     
 if __name__ == "__main__":

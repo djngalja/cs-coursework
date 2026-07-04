@@ -9,6 +9,7 @@ Mini projects aimed at building my _Python3_ skills.
 1. __Coding and algorithmic problems _[Python basics]_:__ entry point, control structures, data types, input/output, exceptions, files, functions
 2. __Exam simulator _[OOP and parallel programming]_:__ sorting, multiprocessing, random, time, prettytable
 3. __Image downloader _[Asynchronous programming]_:__ asyncio,  aiohttp
+4. __Noughts and crosses _[Web applications]_:__ Flask framework, minimax algorithm
 
 ## Disclaimer
 This repository contains __my original source code only__. No course materials, instructions, sample input/output or other protected content is included.

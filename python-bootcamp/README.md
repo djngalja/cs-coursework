@@ -4,7 +4,7 @@
 ![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
 <!-- djngalja -->
 
-# Python3 Bootcamp: 3 mini-projects
+# Python3 Bootcamp: 4 mini-projects
 Mini projects aimed at building my _Python3_ skills.
 
 ## Projects

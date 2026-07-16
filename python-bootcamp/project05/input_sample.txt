@@ -1,0 +1,35 @@
++-------------------+
+|  Input templates: |
++-------------------+
+
+{
+    "login": "djngalja",
+    "pswd": "hello"
+}
+
+{
+    "state": [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ]
+}
+
+{
+    "opponent": 1
+}
+# 1 - Human, 2 - Computer
+
++-----------+
+|  Methods: |
++-----------+
+POST /game -> new game
+POST /game/<current_game_UUID>/join -> join game
+POST /game/<current_game_UUID> -> make a move
+
+GET /games/available -> games you can join
+GET /games/<current_game_UUID> -> get game
+GET /users/<user_UUID> -> get user
+
+POST /register
+POST /login
